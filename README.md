@@ -1,7 +1,7 @@
 # infra-study
 
-## ChatGPT(Ar)に手伝ってもらいながら学習ロードマップを作成してるから、内容おかしかったら手直しする。
-## 以下、Arが生成したREADME
+* ChatGPT(Ar)に手伝ってもらいながら学習ロードマップを作成してるから、内容おかしかったら手直しする。
+* 以下、Arが生成したREADME
 
 # 🛠️ Infrastructure & Cloud Study Log
 
