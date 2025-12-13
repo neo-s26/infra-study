@@ -2,6 +2,8 @@
 ChatGPT(Ar)に手伝ってもらいながら学習ロードマップを作成してるから、内容おかしかったら手直しする。
 以下、Arが生成したREADME
 
+---
+
 # 🛠️ Infrastructure & Cloud Study Log
 
 インフラ／クラウド学習を記録するためのリポジトリです。
