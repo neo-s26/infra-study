@@ -1,4 +1,4 @@
-# 📝 Daily Log（学習ログ）
+# 📝 Infra Daily Log（学習ログ）
 
 短時間でもOK。やったことを一言で残す。
 
