@@ -16,7 +16,9 @@
 
 このリポジトリでは以下を管理します：
 
-* Azure / AWS の学習ログ
+* Azure / AWS の試験型ガイド
+* ソースコードの読み方メモ
+* 参考書テキスト抽出後の整理メモ
 * Windows Server / ネットワーク基礎メモ
 * Git / GitHub の練習
 * PowerShell / Python の自動化メモ
@@ -24,35 +26,34 @@
 
 ---
 
-## 📅 Study Roadmap（半年ロードマップ）
+## 📅 Study Plan
 
-### **1〜2ヶ月目：Azure基礎（AZ-900）**
+詳細な計画は以下を参照：
 
-* クラウドの基本概念理解
-* Azureポータル操作の練習
-* 仮想マシン・ストレージ・VNetの基礎理解
+* 📄 **study-plan.md**
 
-### **3〜4ヶ月目：Azure実務（AZ-104）**
+このREADMEでは概要のみを記載します。
 
-* VM構築演習
-* VNet / NSG / Monitor
-* PowerShell基礎
+---
 
-### **5〜6ヶ月目：AWS基礎（CLF）**
+## 🧭 学習の考え方（重要）
 
-* IAM / EC2 / VPC / S3 の基礎
-* Azureとの比較をメモ
+* まず **参考書を読み上げオーディオ化**する
+* 内容理解は「一度で理解しない」前提
+* 繰り返し聞くことで、用語や構造に慣れる
+* 試験対策はオーディオで仕込んだ後に行う
+* 体調が悪い日は「聞くだけ」でOK
 
 ---
 
 ## 🧰 Tech Stack（触る予定の技術）
 
-* **Azure**（AZ-900 → AZ-104）
-* **AWS**（CLF → SAA予定）
-* **Windows Server / IIS / Active Directory**
-* **PowerShell**
-* **Git / GitHub**
-* **Python（ローカル自動化）**
+* **Azure**（AZ-900）
+* **AWS**（SAA）
+* **Windows Server 基礎/ IIS / Active Directory**
+* **ネットワーク基礎**
+* **PowerShell（自動化の入口）**
+* **Git / GitHub（学習管理）**
 
 ---
 
@@ -60,33 +61,21 @@
 
 ```
 infra-study/
+├── study-plan.md
 ├── azure/
-│   ├── az900-notes.md
-│   └── az104-labs.md
+│   ├── az900-guide.md
+│   └── azure-to-aws.md
 ├── aws/
-│   └── clf-notes.md
-├── windows-server/
-│   └── eventlog-troubleshoot.md
-├── network/
-│   └── basics.md
+│   └── SAA-guide.md
+├── fundamental/
+│   ├── fe-am.md
+│   └── fe-pm.md
+├── oop/
+│   └── oop-audio-notes.md
 ├── automation/
-│   ├── powershell/
-│   └── python/
+│   └── powershell.md
 └── docs/
     └── daily-log.md
-```
-
----
-
-## 📝 Daily Log（学習ログ）
-
-日々、短くてもいいので以下のように記録していきます：
-
-```
-### 2025-XX-XX
-- Azure VMの起動〜停止を試した
-- VNet と サブネットの違いを理解
-- GitHub Issue を1件作成
 ```
 
 ---
@@ -94,6 +83,6 @@ infra-study/
 ## 🌟 Goals（目標）
 
 * Azure基礎 → Azure管理 → AWS基礎の流れを完成させる
-* GitHub を使いこなし学習プロセスを管理する
+* GitHub を使いこなし試験型ガイド・Java→C＃読み替え等**武器庫**として活用する
 * 障害対応力を強化する
 * ローカル自動化（PowerShell/Python）に着手する
