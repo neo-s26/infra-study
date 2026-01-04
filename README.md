@@ -72,10 +72,9 @@ infra-study/
 │   └── fe-pm.md
 ├── oop/
 │   └── oop-audio-notes.md
-├── automation/
-│   └── powershell.md
-└── docs/
-    └── daily-log.md
+└── automation/
+ 　 └── powershell.md
+
 ```
 
 ---
