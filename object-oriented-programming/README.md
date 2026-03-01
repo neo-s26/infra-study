@@ -13,6 +13,9 @@
 
 ## ディレクトリ構成
 object-oriented-programming/
+
 ├── summary/            # 章ごとの要約（Markdown）
+
 ├── language-mapping/   # Java → VB / C# 読み替えメモ
+
 └── README.md
