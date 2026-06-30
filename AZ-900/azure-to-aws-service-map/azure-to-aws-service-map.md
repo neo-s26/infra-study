@@ -1,646 +1,302 @@
-# Azure → AWS サービス読み替え表｜SAA学習用
+# Azure → AWS サービス読み替え表
 
-## 0. この表の使い方
-
-この表は、AZ-900で学んだAzureの知識を、AWS Certified Solutions Architect - Associate（SAA）向けに読み替えるための対応表。
-
-注意点：
-
-- AzureとAWSは完全な1対1対応ではない
-- 同じような役割でも、設計思想や責任範囲が違うことがある
-- SAAでは「サービス名の暗記」より「要件に対して何を選ぶか」が重要
-- Azureで覚えた概念を入口にして、AWSの設計パターンへつなげる
+AZ-900で学んだAzureの知識を、AWS SAA学習へつなげるための読み替え表。
+完全に1対1対応するものばかりではないため、特に「注意ポイント」を意識する。
 
 ---
 
-## 1. 全体構造・アカウント管理
+## 1. 基本概念・アカウント管理
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| Microsoft Azure | Amazon Web Services（AWS） | クラウドサービス全体 |
-| リージョン | リージョン | 地理的な提供地域。基本概念はほぼ同じ |
-| 可用性ゾーン | アベイラビリティゾーン（AZ） | 同一リージョン内の独立したデータセンター群 |
-| リージョンペア | 明確な固定ペアは基本なし | AWSでは自分でマルチリージョンDRを設計する |
-| サブスクリプション | AWSアカウント | 請求・権限・リソース分離の単位として近い |
-| 管理グループ | AWS Organizations / Organizational Units（OU） | 複数アカウントを階層管理する |
-| リソースグループ | Resource Groups / タグ運用 | AWSではタグによる分類が特に重要 |
-| リソース | AWSリソース | EC2、S3、VPCなどの個々のサービス実体 |
-| グローバルサービス | グローバルサービス | IAM、Route 53、CloudFrontなどはグローバル寄り |
-| SLA | AWS Service Level Agreement | サービスごとに可用性や補償条件がある |
-| サービスクレジット | サービスクレジット | SLA未達時の利用料金クレジット |
+| Azure                   | AWS                                         | ざっくり読み替え           | 注意ポイント                                                 |
+| ----------------------- | ------------------------------------------- | ------------------ | ------------------------------------------------------ |
+| Azureアカウント              | AWSアカウント                                    | クラウド利用の単位          | Azureは「テナント」「サブスクリプション」の考え方が強い。AWSはアカウント単位で分離することが多い。  |
+| Microsoft Entra ID テナント | AWS Organizations / IAM Identity Center     | 組織・ID管理の土台         | 完全一致ではない。Entra IDは企業ID基盤、AWS OrganizationsはAWSアカウント管理。 |
+| サブスクリプション               | AWSアカウント                                    | 課金・リソース管理の単位       | AzureのサブスクリプションはAWSアカウントに近い。                           |
+| リソースグループ                | タグ / Resource Groups / CloudFormation Stack | リソースをまとめる単位        | AWSではAzureのリソースグループほど強制的な入れ物ではない。タグ管理が重要。              |
+| リージョン                   | リージョン                                       | 地理的なデータセンター群       | 基本的な考え方は近い。                                            |
+| 可用性ゾーン                  | Availability Zone                           | リージョン内の物理的に分離された場所 | AWSでも高可用性設計の基本。                                        |
+| リージョンペア                 | 明確な同等サービスなし                                 | 災害対策用のリージョン組み合わせ   | AWSでは自分でマルチリージョン設計を考える。                                |
 
 ---
 
-## 2. クラウド概念・責任共有
+## 2. コンピューティング
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| 共有責任モデル | 共有責任モデル | クラウド事業者と利用者の責任分担 |
-| IaaS | IaaS | EC2など。OS以上は利用者管理が多い |
-| PaaS | マネージドサービス | Elastic Beanstalk、RDS、Lambdaなど |
-| SaaS | SaaS | Amazon WorkSpaces、Amazon QuickSightなどサービスにより異なる |
-| CAPEX | CAPEX | オンプレミスの設備投資 |
-| OPEX | OPEX | クラウド利用料などの運用費 |
-| 高可用性 | High Availability | 複数AZ、冗長化、ロードバランサーが重要 |
-| フォールトトレランス | Fault Tolerance | 障害発生時も処理継続できる設計 |
-| スケーラビリティ | Scalability | Auto Scaling、ELB、サーバーレスなど |
-| 弾力性 | Elasticity | 需要に応じて自動的に増減する力 |
-| 機敏性 | Agility | すばやくリソースを作成・変更できること |
-| ハイブリッドクラウド | Hybrid Cloud | Direct Connect、VPN、Outposts、Storage Gatewayなど |
-| マルチクラウド | Multi-Cloud | AWSとAzureなど複数クラウドを併用 |
+| Azure                      | AWS                                                    | ざっくり読み替え        | SAAでの重要度 | 注意ポイント                                                   |
+| -------------------------- | ------------------------------------------------------ | --------------- | -------- | -------------------------------------------------------- |
+| Azure Virtual Machines     | Amazon EC2                                             | 仮想マシン           | 高        | SAAではEC2の購入オプション、Auto Scaling、EBSとの組み合わせが重要。             |
+| Virtual Machine Scale Sets | Auto Scaling Group                                     | VMの自動増減         | 高        | 負荷に応じたスケーリングの基本。                                         |
+| Azure App Service          | Elastic Beanstalk / App Runner                         | Webアプリ実行環境      | 中        | App ServiceはPaaS寄り。AWSではElastic BeanstalkやApp Runnerが近い。 |
+| Azure Functions            | AWS Lambda                                             | サーバーレス関数        | 高        | SAAではイベント駆動、実行時間、他サービス連携が重要。                             |
+| Azure Container Instances  | AWS Fargate                                            | サーバーレスコンテナ      | 中        | 単体コンテナ実行ならFargateのイメージ。                                  |
+| Azure Kubernetes Service   | Amazon EKS                                             | マネージドKubernetes | 中        | SAAではECS/Fargateの方が出やすいこともある。                            |
+| Azure Container Registry   | Amazon ECR                                             | コンテナイメージ保管      | 中        | ECS/EKS/Lambdaコンテナと組み合わせる。                               |
+| Azure Batch                | AWS Batch                                              | バッチ処理           | 低〜中      | 大量ジョブ処理向け。                                               |
+| Azure Bastion              | Systems Manager Session Manager / EC2 Instance Connect | 踏み台なし接続         | 中        | AWSでは踏み台サーバーを置かずSSMで接続する構成が重要。                           |
 
 ---
 
-## 3. 管理ツール・IaC
+## 3. ストレージ
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| Azure portal | AWS Management Console | WebベースのGUI管理画面 |
-| Azure PowerShell | AWS Tools for PowerShell | PowerShellでAWSを操作 |
-| Azure CLI | AWS CLI | コマンドラインでAWSを操作 |
-| Azure Cloud Shell | AWS CloudShell | ブラウザー上でCLIを実行できる |
-| Azure Resource Manager（ARM） | AWS API / CloudFormationの基盤操作 | AzureのARMのような単一名称では覚えにくい |
-| ARMテンプレート | AWS CloudFormation | インフラをコードで定義して展開 |
-| Bicep | AWS CDK / CloudFormation | より書きやすいIaCの位置づけ |
-| Azure Arc | AWS Systems Manager / AWS Outposts / AWS Control Towerなど | 用途により対応が分かれる。完全一致ではない |
-| Azure Mobile Apps | AWS Console Mobile Application | モバイルからリソース確認・簡易操作 |
-| タグ | タグ | コスト配分・検索・自動化・権限管理で重要 |
+| Azure               | AWS                                      | ざっくり読み替え         | SAAでの重要度 | 注意ポイント                                                               |
+| ------------------- | ---------------------------------------- | ---------------- | -------- | -------------------------------------------------------------------- |
+| Azure Blob Storage  | Amazon S3                                | オブジェクトストレージ      | 最重要      | SAA頻出。静的Web、バックアップ、ライフサイクル、暗号化、バージョニング。                              |
+| Azure Blob Archive  | S3 Glacier系                              | アーカイブストレージ       | 高        | Glacier Instant Retrieval / Flexible Retrieval / Deep Archiveの違いに注意。 |
+| Azure Files         | Amazon EFS / FSx for Windows File Server | ファイル共有           | 高        | Linux系共有ならEFS、Windows SMBならFSx for Windows。                          |
+| Azure Managed Disks | Amazon EBS                               | VM/EC2用ブロックストレージ | 高        | EC2にアタッチするディスク。スナップショットも重要。                                          |
+| Azure Disk Storage  | Amazon EBS                               | ブロックストレージ        | 高        | EBSのgp3/io2/sc1/st1などの違いがSAAで出やすい。                                   |
+| Azure Queue Storage | Amazon SQS                               | キュー              | 高        | 疎結合化の基本。標準キューとFIFOキューを区別。                                            |
+| Azure Table Storage | Amazon DynamoDB                          | NoSQL Key-Value  | 中        | 完全一致ではないが、シンプルなNoSQLとして近い。                                           |
+| Azure NetApp Files  | Amazon FSx for NetApp ONTAP              | NetApp系ファイルサービス  | 低        | エンタープライズ向け。                                                          |
+| Azure Backup        | AWS Backup                               | バックアップ管理         | 中        | 複数サービスのバックアップを集中管理。                                                  |
 
 ---
 
-## 4. コンピューティング
+## 4. データベース
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| Azure Virtual Machines | Amazon EC2 | IaaSの仮想サーバー |
-| VMサイズ | インスタンスタイプ | vCPU、メモリ、用途別ファミリーを選ぶ |
-| マネージドディスク | EBS | EC2に接続するブロックストレージ |
-| OSディスク | ルートEBSボリューム | EC2起動用のディスク |
-| データディスク | 追加EBSボリューム | データ保存用に追加する |
-| 可用性セット | 近い直接対応なし | AWSでは複数AZ配置で考えることが多い |
-| 障害ドメイン | AZ / ラック分散はAWS側抽象化 | SAAではAZ分散が重要 |
-| 更新ドメイン | 近い直接対応なし | AWSではマネージドサービスや複数AZで影響を下げる |
-| 可用性ゾーン | アベイラビリティゾーン | 同一リージョン内の障害分離単位 |
-| Virtual Machine Scale Sets | Auto Scaling group | EC2台数を自動増減する |
-| 自動スケール | Auto Scaling | 負荷やスケジュールに応じて増減 |
-| スケールアップ | スケールアップ | インスタンスタイプを大きくする |
-| スケールアウト | スケールアウト | EC2台数を増やす |
-| Azure App Service | AWS Elastic Beanstalk / AWS App Runner | Webアプリをマネージドに実行 |
-| App Serviceプラン | Beanstalk環境 / App Runner構成 | 実行基盤やサイズの考え方 |
-| Azure Functions | AWS Lambda | サーバーレスでイベント駆動のコード実行 |
-| トリガー | イベントソース | S3、EventBridge、SQS、API Gatewayなど |
-| Web App for Containers | AWS App Runner / ECS Fargate | コンテナーWebアプリを実行 |
-| Azure Container Instances（ACI） | ECS on Fargate / AWS App Runner | サーバー管理なしでコンテナー実行 |
-| Azure Kubernetes Service（AKS） | Amazon EKS | Kubernetesのマネージドサービス |
-| Azure Container Registry（ACR） | Amazon ECR | コンテナーイメージのレジストリ |
-| Azure Virtual Desktop | Amazon WorkSpaces / AppStream 2.0 | 仮想デスクトップやアプリ配信 |
-| ホストプール | WorkSpacesプール / AppStreamフリート | 完全一致ではないが、利用者環境をまとめる考え方 |
+| Azure                         | AWS                                           | ざっくり読み替え             | SAAでの重要度 | 注意ポイント                                         |
+| ----------------------------- | --------------------------------------------- | -------------------- | -------- | ---------------------------------------------- |
+| Azure SQL Database            | Amazon RDS / Amazon Aurora                    | マネージドRDB             | 高        | SQL ServerならRDS for SQL Server。AWSではAuroraも重要。 |
+| Azure SQL Managed Instance    | Amazon RDS for SQL Server                     | SQL Server互換のマネージドDB | 中        | SQL Server移行文脈で考える。                            |
+| Azure Database for PostgreSQL | Amazon RDS for PostgreSQL / Aurora PostgreSQL | PostgreSQL           | 高        | Auroraは高可用性・高性能のAWS独自DB。                       |
+| Azure Database for MySQL      | Amazon RDS for MySQL / Aurora MySQL           | MySQL                | 高        | RDSとAuroraの違いに注意。                              |
+| Cosmos DB                     | DynamoDB / DocumentDB                         | NoSQL                | 高        | Key-ValueならDynamoDB、MongoDB互換ならDocumentDB。     |
+| Azure Cache for Redis         | ElastiCache for Redis / Valkey                | インメモリキャッシュ           | 高        | SAAではRDS負荷軽減、セッション管理で出やすい。                     |
+| Azure Synapse Analytics       | Amazon Redshift                               | データウェアハウス            | 中        | 分析基盤。OLTPではなくOLAP。                             |
+| Azure Data Factory            | AWS Glue / Step Functions                     | データ連携・ETL            | 中        | ETLならGlue、ワークフロー制御ならStep Functions。            |
 
 ---
 
 ## 5. ネットワーク
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| Azure Virtual Network（VNet） | Amazon VPC | クラウド内のプライベートネットワーク |
-| サブネット | サブネット | VPC/VNet内を分割する範囲 |
-| アドレス空間 | VPC CIDRブロック | VPC全体のIPアドレス範囲 |
-| サブネットのアドレス範囲 | サブネットCIDR | サブネット単位のIP範囲 |
-| プライベートIPアドレス | プライベートIPv4アドレス | 内部通信で使うIP |
-| パブリックIPアドレス | パブリックIPv4 / Elastic IP | インターネット到達用IP |
-| ネットワークインターフェイス | Elastic Network Interface（ENI） | VM/EC2をネットワークに接続する |
-| NSG | セキュリティグループ / ネットワークACL | AWSでは2種類を使い分ける |
-| NSG受信規則 | セキュリティグループのインバウンドルール | 入ってくる通信を制御 |
-| NSG送信規則 | セキュリティグループのアウトバウンドルール | 出ていく通信を制御 |
-| Azure Firewall | AWS Network Firewall | ネットワークファイアウォール |
-| Azure Bastion | AWS Systems Manager Session Manager / EC2 Instance Connect | 踏み台なし接続。完全一致ではない |
-| VNetピアリング | VPC Peering | 2つのVPCをプライベート接続 |
-| グローバルVNetピアリング | 異なるリージョンのVPC Peering | リージョン間VPC接続 |
-| VNet間接続 | Site-to-Site VPN / Transit Gateway | VPC同士をVPNや中継で接続 |
-| VPNゲートウェイ | Virtual Private Gateway / Transit Gateway | VPN接続のAWS側ゲートウェイ |
-| サイト間VPN | AWS Site-to-Site VPN | オンプレミスとAWSをVPN接続 |
-| ポイント対サイトVPN | AWS Client VPN | 個人端末からVPCへVPN接続 |
-| ExpressRoute | AWS Direct Connect | 専用線接続 |
-| ローカルネットワークゲートウェイ | Customer Gateway | オンプレミス側ルーター情報 |
-| サービスエンドポイント | VPCエンドポイント | AWSサービスへプライベート接続 |
-| Private Link | AWS PrivateLink | サービスへプライベート接続 |
-| ロードバランサー | Elastic Load Balancing（ELB） | 負荷分散 |
-| Application Gateway | Application Load Balancer（ALB） | L7 HTTP/HTTPS負荷分散 |
-| Azure Load Balancer | Network Load Balancer（NLB） | L4負荷分散 |
-| Azure Front Door | CloudFront / Global Accelerator / ALB | グローバル配信・入口。用途で分かれる |
-| CDN | Amazon CloudFront | コンテンツ配信 |
-| DNSゾーン | Route 53 パブリックホストゾーン | インターネット向けDNS |
-| プライベートDNSゾーン | Route 53 プライベートホストゾーン | VPC内部向けDNS |
-| Aレコード | Aレコード | 名前をIPv4に対応付ける |
-| CNAMEレコード | CNAMEレコード | 別名を定義 |
-| MXレコード | MXレコード | メールサーバーを定義 |
-| NSレコード | NSレコード | 権威DNSサーバーを示す |
-| DNS委任 | DNS委任 | 上位DNSへNSレコードを登録 |
+| Azure                           | AWS                                        | ざっくり読み替え           | SAAでの重要度 | 注意ポイント                                             |
+| ------------------------------- | ------------------------------------------ | ------------------ | -------- | -------------------------------------------------- |
+| Virtual Network                 | VPC                                        | 仮想ネットワーク           | 最重要      | AWSネットワークの土台。CIDR、サブネット、ルートテーブルが重要。                |
+| サブネット                           | Subnet                                     | VPC内の分割            | 最重要      | AWSではサブネットは1つのAZに属する。                              |
+| Network Security Group          | Security Group / Network ACL               | 通信制御               | 最重要      | Azure NSGはサブネット/NICに適用。AWS SGはインスタンス等、NACLはサブネット。  |
+| Azure Firewall                  | AWS Network Firewall                       | マネージドファイアウォール      | 中        | Security Group/NACLより高度なネットワーク制御。                  |
+| Azure VPN Gateway               | AWS Site-to-Site VPN                       | VPN接続              | 高        | インターネット経由で暗号化接続。                                   |
+| ExpressRoute                    | AWS Direct Connect                         | 専用線接続              | 高        | インターネットを経由しない高品質接続。                                |
+| Azure Load Balancer             | Network Load Balancer                      | L4負荷分散             | 高        | TCP/UDPなど。超高性能・低遅延。                                |
+| Application Gateway             | Application Load Balancer                  | L7負荷分散             | 高        | HTTP/HTTPS、パスベースルーティング。                            |
+| Front Door                      | CloudFront / Global Accelerator / Route 53 | グローバル配信・入口         | 中        | 完全一致しない。CDNならCloudFront、低遅延入口ならGlobal Accelerator。 |
+| Traffic Manager                 | Route 53                                   | DNSベースルーティング       | 中        | レイテンシー、フェイルオーバー、加重ルーティング。                          |
+| Azure DNS                       | Route 53                                   | DNS管理              | 高        | ドメイン管理・名前解決。                                       |
+| Private Endpoint / Private Link | AWS PrivateLink / VPC Endpoint             | プライベート接続           | 高        | インターネットを通さずサービスへ接続。                                |
+| NAT Gateway                     | NAT Gateway                                | プライベートサブネットから外向き通信 | 高        | プライベートサブネットのEC2がインターネットへ出る時に使う。                    |
+| DDoS Protection                 | AWS Shield                                 | DDoS対策             | 中        | AWS Shield Standardは基本保護。Advancedは有料。              |
+| Network Watcher                 | VPC Flow Logs / Reachability Analyzer      | ネットワーク監視・診断        | 中        | AWSでは複数サービスに分かれる。                                  |
 
 ---
 
-## 6. ストレージ・データベース
+## 6. ID・アクセス管理
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| ストレージアカウント | S3 / EFS / SQS / DynamoDBなどに分かれる | AWSにはAzure Storage Accountの完全対応はない |
-| Azure BLOB | Amazon S3 | オブジェクトストレージ |
-| BLOBコンテナー | S3バケット | オブジェクトを入れる単位 |
-| BLOBオブジェクト | S3オブジェクト | 保存されるファイル実体 |
-| Azure Files | Amazon EFS / Amazon FSx | ファイル共有。用途で選ぶ |
-| Azure Queue | Amazon SQS | メッセージキュー |
-| Azure Table | Amazon DynamoDB | キー値・NoSQL寄りのデータストア |
-| マネージドディスク | Amazon EBS | VM/EC2用ブロックストレージ |
-| 一時ディスク | インスタンスストア | 一時的なローカルストレージ |
-| Azure SQL Database | Amazon RDS / Amazon Aurora | マネージドRDB |
-| SQL Server on Azure VM | SQL Server on EC2 | 自分でDBサーバー管理 |
-| Azure Cosmos DB | DynamoDB / DocumentDB / Keyspaces | APIやデータモデルにより対応が分かれる |
-| Azure Cache for Redis | Amazon ElastiCache for Redis / Valkey | インメモリキャッシュ |
-| Azure Data Lake Storage | Amazon S3 + Lake Formation | データレイク構成 |
-| LRS | S3の単一リージョン内冗長性とは考え方が違う | AWSではS3標準で複数AZ冗長 |
-| ZRS | S3 Standardの複数AZ冗長に近い | 厳密な仕組みは違う |
-| GRS | S3 Cross-Region Replication | 別リージョンへ複製 |
-| RA-GRS | S3 CRR先バケットの読み取り | AWSでは複製先バケットを直接読む設計 |
-| ホットアクセス層 | S3 Standard | 頻繁アクセス向け |
-| クールアクセス層 | S3 Standard-IA / One Zone-IA | 低頻度アクセス向け |
-| アーカイブアクセス層 | S3 Glacier Flexible Retrieval / Deep Archive | 長期保管向け |
-| リハイドレート | Glacier復元 | アーカイブから読み取り可能状態へ戻す |
-| ライフサイクル管理ポリシー | S3 Lifecycle | ストレージクラス移行や削除を自動化 |
-| Azure Storage Explorer | AWS Management Console / AWS Toolkit / S3用GUIツール | GUIでストレージ操作 |
-| AzCopy | AWS CLI `aws s3 cp` / `aws s3 sync` | コマンドでコピー・同期 |
-| Azure File Sync | AWS DataSync / AWS Storage Gateway File Gateway | オンプレミスとクラウドのファイル連携 |
-| Azure Migrate | AWS Migration Hub / Application Migration Service（MGN） | 移行評価・サーバー移行 |
-| Azure Data Box | AWS Snow Family | 物理デバイスによる大量データ移行 |
-| Data Box Heavy | AWS Snowball Edge / Snowmobile | 大容量オフライン移行 |
+| Azure                          | AWS                                                          | ざっくり読み替え           | SAAでの重要度               | 注意ポイント                                        |
+| ------------------------------ | ------------------------------------------------------------ | ------------------ | ---------------------- | --------------------------------------------- |
+| Microsoft Entra ID             | IAM / IAM Identity Center                                    | ID・アクセス管理          | 最重要                    | 完全一致しない。Entra IDは企業ID管理、IAMはAWSリソース権限管理。      |
+| Azure RBAC                     | IAM Policy / IAM Role                                        | 権限管理               | 最重要                    | AWSではIAMポリシーをロールやユーザーに付与。                     |
+| Managed Identity               | IAM Role                                                     | サービスに資格情報を持たせず権限付与 | 高                      | EC2ならInstance Profile、LambdaならExecution Role。 |
+| MFA                            | MFA                                                          | 多要素認証              | 高                      | ルートユーザー・IAMユーザーで重要。                           |
+| 条件付きアクセス                       | IAM Policy Condition / IAM Identity Center / Verified Access | 条件に応じたアクセス制御       | 中                      | Azureの条件付きアクセスと完全一致するAWS単体サービスはない。            |
+| Privileged Identity Management | IAM Identity Center / 一時的な権限付与設計                             | 低〜中                | AWSでは一時認証情報やロール切替で考える。 |                                               |
+| Entra ID アプリ登録                 | IAM Role / Cognito / IAM Identity Provider                   | アプリ連携・認証           | 中                      | 用途によって対応先が変わる。                                |
 
 ---
 
-## 7. ID・アクセス管理
+## 7. セキュリティ
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| Microsoft Entra ID（Azure AD） | IAM Identity Center / IAM / Cognito | 用途で分かれる。完全一致ではない |
-| Azure ADユーザー | IAM Identity Centerユーザー / IAMユーザー | 人間ユーザー管理の考え方 |
-| Azure ADグループ | IAM Identity Centerグループ / IAMグループ | 権限管理の単位 |
-| Microsoftアカウント | AWSアカウントのルートユーザーとは別物 | 個人IDとクラウド管理者IDは混同注意 |
-| 職場または学校アカウント | IAM Identity Centerユーザー | 組織ユーザーのSSOに近い |
-| シングルサインオン | IAM Identity Center | 複数AWSアカウントやアプリへSSO |
-| Azure AD Connect | IAM Identity Centerの外部IdP連携 / AD Connector | 既存ID基盤との連携 |
-| AD DS | AWS Directory Service for Microsoft AD | マネージドMicrosoft AD |
-| Azure AD DS | AWS Managed Microsoft AD | Kerberos/LDAPが必要なWindows系ワークロード |
-| MFA | MFA | 多要素認証 |
-| 条件付きアクセス | IAM Identity Center + 外部IdP条件 / Verified Accessなど | AWS単体ではAzure ADほど同じ形ではない |
-| Identity Protection | GuardDuty / IAM Access Analyzer / Security Hubなど | IDリスク検出の完全対応ではない |
-| Azure RBAC | IAMポリシー / IAMロール / SCP | AWSではIAMが中心 |
-| ロール | IAMロール / IAMポリシー | 権限のまとまり |
-| 所有者 | AdministratorAccessに近い | 強すぎる権限。SAAでは最小権限を意識 |
-| 共同作成者 | PowerUserAccessに近い | IAM管理はできないが多くのリソース操作が可能 |
-| 閲覧者 | ReadOnlyAccess | 参照のみ |
-| カスタムロール | カスタマー管理ポリシー | 独自の権限定義 |
-| セキュリティプリンシパル | IAMユーザー / IAMロール / フェデレーションユーザー | 権限を付与される主体 |
-| IAM | IAM | Identity and Access Management |
-| 最小権限 | 最小権限の原則 | SAAで頻出の考え方 |
+| Azure                        | AWS                                                         | ざっくり読み替え   | SAAでの重要度 | 注意ポイント                                 |
+| ---------------------------- | ----------------------------------------------------------- | ---------- | -------- | -------------------------------------- |
+| Azure Key Vault              | AWS KMS / Secrets Manager / Systems Manager Parameter Store | 鍵・シークレット管理 | 高        | 暗号鍵ならKMS、パスワード等ならSecrets Manager。      |
+| Microsoft Defender for Cloud | Security Hub / GuardDuty / Inspector                        | セキュリティ統合管理 | 中        | AWSでは役割が複数サービスに分かれる。                   |
+| Azure Firewall               | AWS Network Firewall                                        | ネットワーク防御   | 中        | ネットワーク境界での制御。                          |
+| Web Application Firewall     | AWS WAF                                                     | Web攻撃対策    | 高        | ALB、CloudFront、API Gatewayなどと組み合わせる。   |
+| Azure DDoS Protection        | AWS Shield                                                  | DDoS対策     | 中        | Shield Standardは自動適用。                  |
+| Microsoft Sentinel           | Security Lake / OpenSearch / Security Hub連携                 | SIEM・ログ分析  | 低〜中      | SAAでは深追いしすぎなくてよい。                      |
+| Azure Policyによるセキュリティ制御      | AWS Config / SCP                                            | 準拠・制御      | 中        | Configは状態評価、SCPはAWS Organizationsでの制限。 |
 
 ---
 
-## 8. セキュリティ
+## 8. 監視・運用管理
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| Microsoft Defender for Cloud | Security Hub / GuardDuty / Inspector / Config | 複数サービスの組み合わせで考える |
-| Defender CSPM | Security Hub / AWS Config / Security Hub CSPM系機能 | セキュリティ態勢管理 |
-| Defender for Servers | Amazon Inspector / Systems Manager / GuardDuty | EC2やサーバー保護 |
-| Defender for Storage | GuardDuty Malware Protection for S3 / Macie / Security Hub | S3保護やデータ検出 |
-| Defender for SQL | RDS監視 / GuardDuty RDS Protection / Security Hub | DB保護は複数サービス |
-| セキュアスコア | Security Hubのセキュリティスコア | セキュリティ状態の評価 |
-| 推奨事項 | Security Hub Findings / Trusted Advisor | 改善項目の提示 |
-| セキュリティアラート | GuardDuty Findings / Security Hub Findings | 脅威検知結果 |
-| 規制コンプライアンスダッシュボード | AWS Artifact / Security Hub standards | 準拠状況確認 |
-| Just-In-Time VMアクセス | Systems Manager Session Manager | SSH/RDPを開けずに管理接続する設計に近い |
-| Key Vault | AWS KMS / Secrets Manager / CloudHSM | 鍵・シークレット・証明書管理 |
-| Azure DDoS Protection | AWS Shield | DDoS対策 |
-| Web Application Firewall | AWS WAF | Webアプリ保護 |
-| Azure Firewall | AWS Network Firewall | ネットワークレベルの保護 |
-| Microsoft Sentinel | Amazon Security Lake / Security Hub / GuardDuty / OpenSearch | SIEM/SOAR領域。完全一致ではない |
-| ゼロトラスト | Zero Trust | AWSでも最小権限、継続検証、ネットワーク分離で実現 |
-| 多層防御 | Defense in Depth | ID、ネットワーク、アプリ、データを多層で守る |
+| Azure                | AWS                                    | ざっくり読み替え  | SAAでの重要度 | 注意ポイント                  |
+| -------------------- | -------------------------------------- | --------- | -------- | ----------------------- |
+| Azure Monitor        | Amazon CloudWatch                      | 監視        | 最重要      | メトリクス、ログ、アラーム。          |
+| Log Analytics        | CloudWatch Logs                        | ログ分析      | 高        | ログ収集・検索。                |
+| Application Insights | CloudWatch Application Signals / X-Ray | アプリ監視     | 中        | 分散トレーシングならX-Ray。        |
+| Azure Service Health | AWS Health Dashboard                   | クラウド側障害情報 | 中        | AWS側の障害・メンテナンス確認。       |
+| Azure Advisor        | AWS Trusted Advisor                    | 推奨事項      | 中        | コスト、セキュリティ、耐障害性などの改善提案。 |
+| Azure Automation     | Systems Manager Automation             | 運用自動化     | 中        | パッチ、コマンド実行、運用タスク自動化。    |
+| Update Management    | Systems Manager Patch Manager          | パッチ管理     | 中        | EC2等のパッチ適用管理。           |
 
 ---
 
-## 9. ガバナンス・コンプライアンス
+## 9. ガバナンス・IaC・コスト管理
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| Azure Policy | AWS Config Rules / Organizations SCP / Control Tower Guardrails | ルールの種類により対応が分かれる |
-| ポリシー定義 | Configルール / SCP | 1つのルール |
-| イニシアチブ定義 | Conformance Packs / Control Tower controls | 複数ルールの集合 |
-| 修復 | AWS Config Remediation | 非準拠リソースの自動修復 |
-| リソースロック | 削除保護 / 終了保護 / S3 Object Lock / Backup Vault Lock | AWSではサービスごとに保護機能が違う |
-| 削除ロック | Termination Protection / Deletion Protection | 削除防止 |
-| 読み取り専用ロック | IAM/SCPで変更拒否 | AWSではIAMやSCPで制御することが多い |
-| Azure Blueprints | AWS Control Tower / Service Catalog / CloudFormation StackSets | 標準環境を展開・統制 |
-| Service Trust Portal | AWS Artifact | 監査レポートやコンプライアンス文書 |
-| トラストセンター | AWS Trust Center | セキュリティ・コンプライアンス情報 |
-| 管理グループへのPolicy割り当て | Organizations OUへのSCP適用 | 上位階層で統制する |
-| RBACの継承 | IAM/SCP/Organizationsの階層適用 | AWSはSCPとIAMの組み合わせに注意 |
+| Azure                  | AWS                                                  | ざっくり読み替え            | SAAでの重要度 | 注意ポイント                                  |
+| ---------------------- | ---------------------------------------------------- | ------------------- | -------- | --------------------------------------- |
+| Azure Policy           | AWS Config / Organizations SCP                       | ルール適用・準拠管理          | 高        | Configは設定評価、SCPはアカウント単位の制限。             |
+| Management Groups      | AWS Organizations OU                                 | 複数アカウント/サブスクリプション管理 | 中        | 組織階層管理。                                 |
+| Azure Resource Manager | CloudFormation                                       | IaC・リソース展開          | 高        | AWSではCloudFormation、CDK、Terraformもよく使う。 |
+| Bicep                  | CloudFormation / CDK                                 | IaC記述               | 中        | AWS CDKはプログラミング言語でIaCを書く。               |
+| Azure Cost Management  | AWS Cost Explorer                                    | コスト分析               | 高        | SAAでもコスト最適化は重要。                         |
+| Azure Budgets          | AWS Budgets                                          | 予算管理                | 中        | 予算超過アラート。                               |
+| Azure Tags             | AWS Tags                                             | リソース分類              | 高        | コスト配賦・管理で重要。                            |
+| Azure Blueprints       | AWS Control Tower / Service Catalog / CloudFormation | 環境標準化               | 低〜中      | Azure Blueprintsは現在は主流ではないため、概念として理解。   |
 
 ---
 
-## 10. 監視・ログ・運用
+## 10. アプリ連携・メッセージング
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| Azure Advisor | AWS Trusted Advisor | ベストプラクティスに基づく推奨 |
-| Azure Service Health | AWS Health Dashboard | AWSサービス障害や自分への影響を確認 |
-| Azureの状態 | AWS Service Health Dashboard | 公開されるサービス状態 |
-| サービス正常性 | AWS Health Dashboard | 自分のアカウントやサービスへの影響 |
-| リソース正常性 | AWS Health / CloudWatch / Personal Health Dashboard | 個別リソースの状態は複数サービスで見る |
-| Azure Monitor | Amazon CloudWatch | メトリック、ログ、アラームの中心 |
-| メトリック | CloudWatch Metrics | 数値データ |
-| ログ | CloudWatch Logs | テキストログ |
-| アクティビティログ | AWS CloudTrail | 誰がいつ何をしたか |
-| リソースログ | CloudWatch Logs / S3ログ / VPC Flow Logs | サービス固有ログ |
-| 診断設定 | CloudWatch Logs出力設定 / CloudTrail設定 | ログ送信先の設定 |
-| Log Analytics | CloudWatch Logs Insights / Athena / OpenSearch | ログ検索・分析 |
-| Kusto Query Language | CloudWatch Logs Insights query language / SQL | クエリ言語は異なる |
-| Azure Monitorアラート | CloudWatch Alarms / EventBridge | 条件に応じた通知・イベント処理 |
-| アクショングループ | SNS / EventBridge targets | 通知先や自動処理 |
-| Application Insights | CloudWatch Application Signals / X-Ray / RUM / Synthetics | アプリ監視・分散トレース |
-| VM Insights | CloudWatch Agent / Systems Manager | EC2やOSレベルの監視 |
-| Network Watcher | VPC Flow Logs / Reachability Analyzer | ネットワーク監視・疎通確認 |
+| Azure                   | AWS                  | ざっくり読み替え   | SAAでの重要度 | 注意ポイント                    |
+| ----------------------- | -------------------- | ---------- | -------- | ------------------------- |
+| Azure Service Bus Queue | Amazon SQS           | メッセージキュー   | 高        | 疎結合化。標準キュー/FIFOキューに注意。    |
+| Azure Service Bus Topic | Amazon SNS + SQS     | Pub/Sub    | 高        | SNSで配信、SQSで受ける構成が頻出。      |
+| Event Grid              | Amazon EventBridge   | イベントルーティング | 高        | イベント駆動アーキテクチャ。            |
+| Event Hubs              | Kinesis Data Streams | ストリーミングデータ | 中        | 大量イベント・ログ収集。              |
+| Logic Apps              | Step Functions       | ワークフロー     | 中        | サーバーレスの処理フロー制御。           |
+| API Management          | Amazon API Gateway   | API公開・管理   | 高        | Lambdaやバックエンドサービスと組み合わせる。 |
+| Azure App Configuration | AWS AppConfig        | アプリ設定管理    | 低〜中      | 設定値の管理・段階的反映。             |
 
 ---
 
-## 11. コスト管理
+## 11. DevOps・開発支援
 
-| Azure | AWS | 読み替えポイント |
-|---|---|---|
-| 料金計算ツール | AWS Pricing Calculator | 利用前の料金見積もり |
-| TCO計算ツール | Migration Evaluator / Pricing Calculator | 移行時のコスト比較 |
-| コスト分析 | AWS Cost Explorer | 利用中・利用後のコスト分析 |
-| 予算アラート | AWS Budgets | 予算超過や予測超過の通知 |
-| Cost Management | AWS Billing and Cost Management | 請求・コスト管理 |
-| タグによるコスト分類 | Cost Allocation Tags | タグ別コスト配分 |
-| 予約 | Reserved Instances / Savings Plans | 長期利用割引 |
-| Azureハイブリッド特典 | BYOL / License Manager / Dedicated Host | 既存ライセンス活用 |
-| Spot VM | EC2 Spot Instances | 余剰キャパシティを安く使う |
-| Advisorのコスト推奨 | Trusted Advisor / Cost Optimization Hub | コスト最適化の推奨 |
+| Azure                | AWS                                                    | ざっくり読み替え    | SAAでの重要度 | 注意ポイント                              |
+| -------------------- | ------------------------------------------------------ | ----------- | -------- | ----------------------------------- |
+| Azure DevOps         | CodePipeline / CodeBuild / CodeDeploy / GitHub Actions | CI/CD       | 中        | AWSでは複数サービスに分かれる。                   |
+| Azure Repos          | GitHub / CodeCommit                                    | Gitリポジトリ    | 低        | CodeCommitは新規利用では扱いに注意。GitHub利用も多い。 |
+| Azure Pipelines      | CodePipeline / CodeBuild                               | CI/CDパイプライン | 中        | ビルドはCodeBuild、デプロイはCodeDeploy。      |
+| Azure Artifacts      | CodeArtifact                                           | パッケージ管理     | 低        | ライブラリ・パッケージ管理。                      |
+| ARM Template / Bicep | CloudFormation / CDK                                   | IaC         | 高        | SAAではCloudFormationの役割を理解。          |
 
 ---
 
-## 12. SAAで特に重要な読み替え
+## 12. SAAで特に優先して覚える対応表
 
-### Azureの「可用性ゾーン」からAWSの「AZ」へ
+まずはここを優先して覚える。
 
-Azureで可用性ゾーンを学んだら、AWSではさらに強く意識する。
-
-SAAでは、次のような判断が頻出。
-
-- EC2を複数AZに配置する
-- RDS Multi-AZを使う
-- ALBで複数AZに負荷分散する
-- Auto Scaling groupで複数AZに展開する
-- S3は標準で複数AZに保存される
-
----
-
-### Azureの「リージョンペア」からAWSの「自分でマルチリージョン設計」へ
-
-Azureにはリージョンペアの考え方がある。
-
-AWSでは、決まったリージョンペアを選ぶというより、要件に応じて自分でマルチリージョン構成を設計する。
-
-SAAで出やすい例：
-
-- Route 53フェイルオーバールーティング
-- S3 Cross-Region Replication
-- DynamoDB Global Tables
-- Aurora Global Database
-- AWS Backupのクロスリージョンコピー
-- CloudFrontによるグローバル配信
+| Azure               | AWS                            | 覚え方          |
+| ------------------- | ------------------------------ | ------------ |
+| Virtual Machine     | EC2                            | 仮想マシン        |
+| Managed Disk        | EBS                            | EC2に付けるディスク  |
+| Blob Storage        | S3                             | オブジェクトストレージ  |
+| Azure Files         | EFS / FSx                      | ファイル共有       |
+| Virtual Network     | VPC                            | 仮想ネットワーク     |
+| NSG                 | Security Group / Network ACL   | 通信制御         |
+| VPN Gateway         | Site-to-Site VPN               | インターネット経由VPN |
+| ExpressRoute        | Direct Connect                 | 専用線          |
+| Azure Load Balancer | Network Load Balancer          | L4負荷分散       |
+| Application Gateway | Application Load Balancer      | L7負荷分散       |
+| Azure Functions     | Lambda                         | サーバーレス関数     |
+| App Service         | Elastic Beanstalk / App Runner | Webアプリ実行基盤   |
+| AKS                 | EKS                            | Kubernetes   |
+| Azure SQL Database  | RDS / Aurora                   | マネージドRDB     |
+| Cosmos DB           | DynamoDB / DocumentDB          | NoSQL        |
+| Azure Monitor       | CloudWatch                     | 監視           |
+| Key Vault           | KMS / Secrets Manager          | 鍵・シークレット     |
+| Azure Policy        | AWS Config / SCP               | 準拠・統制        |
+| Entra ID            | IAM / IAM Identity Center      | ID・権限管理      |
+| Service Bus         | SQS / SNS                      | メッセージング      |
+| Event Grid          | EventBridge                    | イベント連携       |
 
 ---
 
-### Azureの「NSG」からAWSの「セキュリティグループとNACL」へ
+## 13. 混同しやすいAWSサービス
 
-AzureではNSGで通信制御を覚えた。
+SAAでは、Azureとの読み替えよりもAWSサービス同士の違いが重要になる。
 
-AWSでは、主に2つを使い分ける。
-
-| AWS | 特徴 |
-|---|---|
-| セキュリティグループ | インスタンス単位。ステートフル。許可ルール中心 |
-| ネットワークACL | サブネット単位。ステートレス。許可と拒否を設定可能 |
-
-SAAでは、基本はセキュリティグループ、サブネット境界の明示的制御にはNACLと考える。
-
----
-
-### Azureの「App Service」からAWSの「複数候補」へ
-
-Azure App ServiceはWebアプリ用PaaSとして覚えやすい。
-
-AWSでは要件により候補が分かれる。
-
-| 要件 | AWS候補 |
-|---|---|
-| 簡単にWebアプリをデプロイしたい | Elastic Beanstalk |
-| コンテナーWebアプリを楽に動かしたい | App Runner |
-| サーバーレスAPIにしたい | Lambda + API Gateway |
-| コンテナーを本格運用したい | ECS / EKS |
-| 静的Webサイトを配信したい | S3 + CloudFront |
+| 混同しやすい組み合わせ                             | 違い                                                 |
+| --------------------------------------- | -------------------------------------------------- |
+| S3 / EBS / EFS                          | S3はオブジェクト、EBSはブロック、EFSはファイル共有                      |
+| ALB / NLB                               | ALBはHTTP/HTTPSのL7、NLBはTCP/UDPのL4                   |
+| Security Group / Network ACL            | SGはステートフル、NACLはステートレス                              |
+| NAT Gateway / Internet Gateway          | NAT Gatewayはプライベートサブネットから外向き、IGWはVPCとインターネット接続     |
+| SQS / SNS / EventBridge                 | SQSはキュー、SNSは通知配信、EventBridgeはイベントルーティング            |
+| RDS / Aurora / DynamoDB                 | RDSは一般的なRDB、AuroraはAWS独自高性能RDB、DynamoDBはNoSQL      |
+| CloudWatch / CloudTrail / Config        | CloudWatchは監視、CloudTrailは操作履歴、Configは設定評価          |
+| KMS / Secrets Manager / Parameter Store | KMSは鍵、Secrets Managerはシークレット、Parameter Storeは設定値管理 |
+| IAM Role / IAM User / IAM Policy        | Roleは一時的に引き受ける権限、Userは人や長期認証、Policyは権限定義           |
 
 ---
 
-### Azureの「Storage Account」からAWSの「用途別サービス」へ
+## 14. 学習方針メモ
 
-Azure Storage Accountは、BLOB、Files、Queue、Tableをまとめて扱う。
+AZ-900で学んだ内容をSAAへつなげる場合、次の順番で進める。
 
-AWSではサービスが分かれる。
+1. Azureで知っている概念をAWSサービス名へ読み替える
+2. AWSサービス同士の違いを比較表で整理する
+3. 問題演習で「どの要件ならどのサービスか」を判断できるようにする
 
-| Azure Storage | AWS |
-|---|---|
-| BLOB | S3 |
-| Files | EFS / FSx |
-| Queue | SQS |
-| Table | DynamoDB |
+SAAでは単純暗記だけでなく、以下の観点が重要。
 
-SAAでは、ストレージの種類を次のように選ぶ。
-
-- オブジェクト保存：S3
-- EC2用ブロックストレージ：EBS
-- 共有ファイル：EFS / FSx
-- アーカイブ：S3 Glacier系
-- NoSQL：DynamoDB
+* 可用性
+* スケーラビリティ
+* コスト最適化
+* セキュリティ
+* 運用負荷の低減
+* 疎結合化
+* マネージドサービスの活用
 
 ---
 
-### Azureの「RBAC」からAWSの「IAM」へ
+## 15. まず覚える一言まとめ
 
-Azureでは、スコープにロールを割り当てる。
-
-AWSでは、IAMポリシーをユーザー、グループ、ロールに付与する。
-
-SAAで重要な考え方：
-
-- ルートユーザーは日常利用しない
-- IAMユーザーよりIAMロールを優先する場面が多い
-- EC2からS3へアクセスするならアクセスキーではなくIAMロール
-- 権限は最小権限にする
-- 複数アカウント管理ではOrganizationsやSCPを使う
-
----
-
-### Azureの「Azure Policy」からAWSの「SCPとConfig」へ
-
-Azure Policyは、ルール適用と準拠評価をまとめて扱える。
-
-AWSでは用途で分かれる。
-
-| やりたいこと | AWS |
-|---|---|
-| アカウントやOU単位で操作を禁止したい | SCP |
-| リソース設定がルールに準拠しているか評価したい | AWS Config |
-| 非準拠を自動修復したい | AWS Config Remediation |
-| 標準的な統制済み環境を作りたい | AWS Control Tower |
-
----
-
-## 13. Azureで覚えた言葉をAWS風に言い換える
-
-| Azureでの言い方 | AWSでの言い方 |
-|---|---|
-| サブスクリプションを分ける | AWSアカウントを分ける |
-| 管理グループでまとめる | OrganizationsのOUでまとめる |
-| リソースグループでまとめる | タグやResource Groupsでまとめる |
-| 可用性ゾーンに分散する | 複数AZに分散する |
-| リージョンペアに複製する | マルチリージョンDRを設計する |
-| NSGで通信制御する | セキュリティグループとNACLで制御する |
-| VNetを作る | VPCを作る |
-| VNetピアリングする | VPC Peeringする |
-| ExpressRouteでつなぐ | Direct Connectでつなぐ |
-| DNSゾーンを作る | Route 53 Hosted Zoneを作る |
-| BLOBに保存する | S3に保存する |
-| App ServiceでWebアプリを動かす | Elastic Beanstalk / App Runner / Lambdaなどを検討する |
-| Functionsでイベント処理する | Lambdaでイベント処理する |
-| VMSSで台数を増減する | Auto Scaling groupで台数を増減する |
-| Azure Monitorで監視する | CloudWatchで監視する |
-| アクティビティログを見る | CloudTrailを見る |
-| Advisorの推奨を見る | Trusted Advisorを見る |
-| Policyで統制する | SCP / Config / Control Towerで統制する |
+| AWSサービス          | 一言                   |
+| ---------------- | -------------------- |
+| EC2              | 仮想マシン                |
+| S3               | オブジェクトストレージ          |
+| EBS              | EC2用ディスク             |
+| EFS              | 複数EC2で共有できるファイルストレージ |
+| VPC              | AWS内の仮想ネットワーク        |
+| Security Group   | インスタンス単位のファイアウォール    |
+| Network ACL      | サブネット単位のファイアウォール     |
+| IAM              | AWSの権限管理             |
+| Lambda           | サーバーレス関数             |
+| RDS              | マネージドRDB             |
+| Aurora           | AWS独自の高性能RDB         |
+| DynamoDB         | フルマネージドNoSQL         |
+| SQS              | キュー                  |
+| SNS              | 通知・Pub/Sub           |
+| EventBridge      | イベント連携               |
+| CloudWatch       | 監視                   |
+| CloudTrail       | 操作ログ                 |
+| Config           | 設定評価                 |
+| KMS              | 暗号鍵管理                |
+| Secrets Manager  | パスワード・シークレット管理       |
+| Direct Connect   | 専用線                  |
+| Site-to-Site VPN | VPN接続                |
+| Route 53         | DNS                  |
+| CloudFront       | CDN                  |
+| API Gateway      | API公開                |
+| Step Functions   | ワークフロー制御             |
 
 ---
 
-## 14. SAAで迷いやすいAWSサービス選択
+## 16. neo用メモ
 
-| 要件 | 選ぶAWSサービス |
-|---|---|
-| 仮想サーバーを作りたい | EC2 |
-| EC2のディスクを追加したい | EBS |
-| 一時的な高速ローカルディスクが欲しい | インスタンスストア |
-| 静的ファイルや画像を保存したい | S3 |
-| 複数EC2から共有ファイルにアクセスしたい | EFS |
-| Windowsファイル共有が必要 | FSx for Windows File Server |
-| マネージドRDBを使いたい | RDS / Aurora |
-| NoSQLで高速・大規模に使いたい | DynamoDB |
-| メッセージキューで疎結合にしたい | SQS |
-| Pub/Sub通知をしたい | SNS |
-| イベント駆動でつなぎたい | EventBridge |
-| サーバーレスでコードを実行したい | Lambda |
-| REST APIやHTTP APIを公開したい | API Gateway |
-| コンテナーを簡単に動かしたい | ECS Fargate / App Runner |
-| Kubernetesを使いたい | EKS |
-| コンテナーイメージを保存したい | ECR |
-| 負荷分散したい | ELB |
-| HTTP/HTTPSでL7負荷分散したい | ALB |
-| 超低遅延・L4負荷分散したい | NLB |
-| CDNで配信したい | CloudFront |
-| DNS管理したい | Route 53 |
-| オンプレミスとVPN接続したい | Site-to-Site VPN |
-| オンプレミスと専用線接続したい | Direct Connect |
-| プライベートにAWSサービスへ接続したい | VPC Endpoint |
-| 権限管理したい | IAM |
-| 複数AWSアカウントを管理したい | Organizations |
-| SSOしたい | IAM Identity Center |
-| 操作履歴を確認したい | CloudTrail |
-| メトリックやログを監視したい | CloudWatch |
-| 脅威検出したい | GuardDuty |
-| 脆弱性検出したい | Inspector |
-| セキュリティ結果を集約したい | Security Hub |
-| コンプライアンス文書を見たい | AWS Artifact |
-| コストを分析したい | Cost Explorer |
-| 予算通知したい | AWS Budgets |
-| 料金を見積もりたい | AWS Pricing Calculator |
+AZ-900で覚えた内容はSAAでもかなり使える。
 
----
+特に以下はAzureで学んだ考え方をそのままAWSへ持ち込める。
 
-## 15. まず優先して覚えるAWS中核サービス
+* 可用性ゾーン
+* リージョン
+* 負荷分散
+* スケーリング
+* VPNと専用線
+* IDと権限管理
+* オブジェクトストレージ
+* マネージドDB
+* 監視
+* コスト管理
+* ガバナンス
 
-SAAの最初は、以下を優先して押さえる。
+ただし、SAAでは「このサービスは何か」だけでなく、
+「この要件ならどのサービスを選ぶか」が問われる。
 
-### 最優先
+そのため、最終的には
 
-- IAM
-- VPC
-- EC2
-- EBS
-- S3
-- ELB
-- Auto Scaling
-- RDS
-- Route 53
-- CloudWatch
-- CloudTrail
+* サービス概要の暗記
+* 比較表で違いを整理
+* 問題演習で判断力をつける
 
-### 次に重要
-
-- Lambda
-- API Gateway
-- SQS
-- SNS
-- EventBridge
-- DynamoDB
-- CloudFront
-- EFS
-- ECR
-- ECS
-- EKS
-- KMS
-- Secrets Manager
-- Systems Manager
-
-### 設計問題で差がつきやすい
-
-- AWS Organizations
-- SCP
-- AWS Config
-- Trusted Advisor
-- Security Hub
-- GuardDuty
-- Inspector
-- WAF
-- Shield
-- Direct Connect
-- Transit Gateway
-- VPC Endpoint
-- AWS Backup
-- Storage Gateway
-- DataSync
-- Snow Family
-
----
-
-## 16. Azure学習者向けのSAA注意点
-
-### 1. AWSは「アカウント分離」がかなり重要
-
-Azureではサブスクリプション分離で考えたものを、AWSではAWSアカウント分離で考えることが多い。
-
-例：
-
-- 本番アカウント
-- 開発アカウント
-- セキュリティアカウント
-- ログ管理アカウント
-- 共有ネットワークアカウント
-
-OrganizationsとSCPはSAAでも重要。
-
----
-
-### 2. AWSは「複数AZ設計」が超重要
-
-SAAでは、単一AZより複数AZが基本。
-
-例：
-
-- ALBは複数AZ
-- Auto Scaling groupも複数AZ
-- RDSはMulti-AZ
-- NAT GatewayもAZごとに置く設計がある
-- EFSは複数AZから利用できる
-
----
-
-### 3. AWSは「セキュリティグループ」と「NACL」を分けて覚える
-
-AzureのNSGだけの感覚でいくと混乱しやすい。
-
-| 項目 | セキュリティグループ | NACL |
-|---|---|---|
-| 適用先 | ENI / EC2 | サブネット |
-| 状態 | ステートフル | ステートレス |
-| ルール | 許可のみ | 許可と拒否 |
-| 戻り通信 | 自動許可 | 明示的に必要 |
-| よく使う場面 | EC2単位の制御 | サブネット境界の制御 |
-
----
-
-### 4. AWSは「IAMロール」をかなり使う
-
-Azure RBACのロールとは名前が似ていても、AWSのIAMロールは「一時的に引き受ける権限」として使う。
-
-重要パターン：
-
-- EC2にIAMロールを付けてS3へアクセス
-- Lambdaに実行ロールを付ける
-- クロスアカウントアクセスでロールを引き受ける
-- アクセスキーを埋め込まない
-
----
-
-### 5. AWSは「マネージドサービス選択」が試験の中心
-
-SAAでは、要件に対して次のように選ぶ。
-
-- 運用負荷を減らしたい → マネージドサービス
-- 高可用性にしたい → 複数AZ / マルチリージョン
-- 疎結合にしたい → SQS / SNS / EventBridge
-- 静的コンテンツ配信 → S3 + CloudFront
-- グローバルDB → DynamoDB Global Tables / Aurora Global Database
-- サーバーレス → Lambda / API Gateway / DynamoDB / S3
-- コスト最適化 → Savings Plans / Reserved Instances / Spot / S3 storage classes
-
----
-
-## 17. 最後に覚える超重要対応
-
-| Azure | AWS |
-|---|---|
-| Virtual Machines | EC2 |
-| Managed Disk | EBS |
-| Virtual Network | VPC |
-| Subnet | Subnet |
-| NSG | Security Group / NACL |
-| Load Balancer | ELB |
-| Application Gateway | ALB |
-| ExpressRoute | Direct Connect |
-| VPN Gateway | Site-to-Site VPN / VGW |
-| DNS Zone | Route 53 Public Hosted Zone |
-| Private DNS Zone | Route 53 Private Hosted Zone |
-| Blob Storage | S3 |
-| Azure Files | EFS / FSx |
-| Queue Storage | SQS |
-| Table Storage | DynamoDB |
-| Azure SQL Database | RDS / Aurora |
-| Cosmos DB | DynamoDB / DocumentDB |
-| Functions | Lambda |
-| App Service | Elastic Beanstalk / App Runner |
-| AKS | EKS |
-| ACR | ECR |
-| Azure AD | IAM Identity Center / IAM |
-| Azure RBAC | IAM |
-| Key Vault | KMS / Secrets Manager |
-| Defender for Cloud | Security Hub / GuardDuty / Inspector |
-| Azure Policy | SCP / Config |
-| Resource Lock | Deletion Protection / IAM・SCP制御 |
-| Azure Advisor | Trusted Advisor |
-| Azure Monitor | CloudWatch |
-| Activity Log | CloudTrail |
-| Log Analytics | CloudWatch Logs Insights |
-| Service Health | AWS Health Dashboard |
-| Pricing Calculator | AWS Pricing Calculator |
-| Cost Analysis | Cost Explorer |
-| Budget Alert | AWS Budgets |
-| Azure Migrate | AWS Migration Hub / MGN |
-| Data Box | Snow Family |
+の3段階で進める。
